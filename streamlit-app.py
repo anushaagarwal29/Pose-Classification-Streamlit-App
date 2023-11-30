@@ -82,7 +82,7 @@ def main():
 
         if use_webcam:
             # vid = cv2.VideoCapture(0)
-            vid = webrtc_streamer(key="example")
+            webrtc_streamer(key="example")
         else:
             vid = cv2.VideoCapture(DEMO_VIDEO)
             tfflie.name = DEMO_VIDEO
