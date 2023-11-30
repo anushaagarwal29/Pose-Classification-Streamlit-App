@@ -113,7 +113,8 @@ def main():
     count=0
 
     model_path = 'finalized_model.sav'
-    model_full_path = os.path.join(os.getcwd(), model_path)
+    model_full_path = model_path
+    # model_full_path = os.path.join(os.getcwd(), model_path)
     print(model_full_path)
 
     with open(model_full_path, 'rb') as f:
