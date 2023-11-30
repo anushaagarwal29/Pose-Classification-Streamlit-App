@@ -1,8 +1,10 @@
-opencv-python-headless
-opencv-python
+opencv-python-headless==4.8.1.78
+pydub==0.25.1
+streamlit_webrtc==0.47.1
+twilio~=8.10.1
+
 mediapipe
 streamlit
-streamlit_webrtc
 numpy
 sounddevice
 pandas
