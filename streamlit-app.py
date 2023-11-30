@@ -266,7 +266,7 @@ def main():
                 else:
                     print_ans = "Good Posture"
 
-                font = ImageFont.truetype("C:/Windows/Fonts/Arial.ttf", 50)
+                font = ImageFont.truetype("Arial Unicode.ttf", 50)
                 bbox = draw.textbbox((20,80), print_ans, font = font)
                 draw.rectangle(bbox, fill = 'black')
                 draw.text((20,80), print_ans, font = font, fill = 'white')
