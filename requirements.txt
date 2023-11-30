@@ -1,6 +1,6 @@
 opencv-python-headless
 mediapipe
-streamlit==0.52.1
+streamlit
 numpy
 sounddevice
 pandas
@@ -8,5 +8,4 @@ imblearn
 scikit-learn==1.3.0
 aiortc
 av
-opencv-python==4.3.0.38
-black
+
