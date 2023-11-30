@@ -1,71 +1,54 @@
-import streamlit as st
 import cv2
-from PIL import Image
 import numpy as np
-import os
+import av
+import mediapipe as mp
+from streamlit_webrtc import webrtc_streamer, WebRtcMode, RTCConfiguration
 
-from const import CLASSES, COLORS
-from settings import DEFAULT_CONFIDENCE_THRESHOLD, DEMO_IMAGE, MODEL, PROTOTXT
-
-
-@st.cache
-def process_image(image):
-    blob = cv2.dnn.blobFromImage(
-        cv2.resize(image, (300, 300)), 0.007843, (300, 300), 127.5
-    )
-    net = cv2.dnn.readNetFromCaffe(PROTOTXT, MODEL)
-    net.setInput(blob)
-    detections = net.forward()
-    return detections
-
-
-@st.cache
-def annotate_image(
-    image, detections, confidence_threshold=DEFAULT_CONFIDENCE_THRESHOLD
-):
-    # loop over the detections
-    (h, w) = image.shape[:2]
-    labels = []
-    for i in np.arange(0, detections.shape[2]):
-        confidence = detections[0, 0, i, 2]
-
-        if confidence > confidence_threshold:
-            # extract the index of the class label from the `detections`,
-            # then compute the (x, y)-coordinates of the bounding box for
-            # the object
-            idx = int(detections[0, 0, i, 1])
-            box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
-            (startX, startY, endX, endY) = box.astype("int")
-
-            # display the prediction
-            label = f"{CLASSES[idx]}: {round(confidence * 100, 2)}%"
-            labels.append(label)
-            cv2.rectangle(image, (startX, startY), (endX, endY), COLORS[idx], 2)
-            y = startY - 15 if startY - 15 > 15 else startY + 15
-            cv2.putText(
-                image, label, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2
-            )
-    return image, labels
-
-
-st.title("Object detection with MobileNet SSD")
-img_file_buffer = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
-confidence_threshold = st.slider(
-    "Confidence threshold", 0.0, 1.0, DEFAULT_CONFIDENCE_THRESHOLD, 0.05
+mp_drawing = mp.solutions.drawing_utils
+mp_drawing_styles = mp.solutions.drawing_styles
+mp_hands = mp.solutions.hands
+hands = mp_hands.Hands(
+    model_complexity=0,
+    min_detection_confidence=0.5,
+    min_tracking_confidence=0.5
 )
 
-if img_file_buffer is not None:
-    image = np.array(Image.open(img_file_buffer))
+def process(image):
+    image.flags.writeable = False
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    results = hands.process(image)
 
-else:
-    demo_image = DEMO_IMAGE
-    image = np.array(Image.open(demo_image))
+    # Draw the hand annotations on the image.
+    image.flags.writeable = True
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    if results.multi_hand_landmarks:
+      for hand_landmarks in results.multi_hand_landmarks:
+        mp_drawing.draw_landmarks(
+            image,
+            hand_landmarks,
+            mp_hands.HAND_CONNECTIONS,
+            mp_drawing_styles.get_default_hand_landmarks_style(),
+            mp_drawing_styles.get_default_hand_connections_style())
+    return cv2.flip(image, 1)
 
-detections = process_image(image)
-image, labels = annotate_image(image, detections, confidence_threshold)
 
-st.image(
-    image, caption=f"Processed image", use_column_width=True,
+RTC_CONFIGURATION = RTCConfiguration(
+    {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
 )
 
-st.write(labels)
+class VideoProcessor:
+    def recv(self, frame):
+        img = frame.to_ndarray(format="bgr24")
+
+        img = process(img)
+
+        return av.VideoFrame.from_ndarray(img, format="bgr24")
+
+webrtc_ctx = webrtc_streamer(
+    key="WYH",
+    mode=WebRtcMode.SENDRECV,
+    rtc_configuration=RTC_CONFIGURATION,
+    media_stream_constraints={"video": True, "audio": False},
+    video_processor_factory=VideoProcessor,
+    async_processing=True,
+)
