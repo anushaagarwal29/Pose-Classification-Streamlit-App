@@ -1,6 +1,8 @@
 opencv-python-headless
-mediapipe
+opencv-python
+mediapipe==0.8.9.1
 streamlit
+streamlit_webrtc
 numpy
 sounddevice
 pandas
