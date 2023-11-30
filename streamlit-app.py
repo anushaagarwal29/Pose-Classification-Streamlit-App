@@ -18,7 +18,7 @@ import pandas as pd
 import warnings
 
 import sklearn.metrics
-import webrtc_streamer
+from streamlit_webrtc import webrtc_streamer
 warnings.filterwarnings("ignore")
 
 
